@@ -1,85 +1,35 @@
+import 'package:car_on_sale_challenge/business_layer/module_configurator.dart';
 import 'package:car_on_sale_challenge/presentation_layer/constants/app_colors.dart';
 import 'package:car_on_sale_challenge/presentation_layer/helpers/loading_dialog.dart';
 import 'package:flutter/material.dart';
-
-final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 abstract class BaseStatefulWidget extends StatefulWidget {
   const BaseStatefulWidget({super.key});
 }
 
 abstract class BaseState<T extends BaseStatefulWidget> extends State<T> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      child: Scaffold(
-        floatingActionButton: getFloatingActionButton(),
-        appBar: getAppbar(),
-        body: GestureDetector(
-          onTap: () {
-            FocusScope.of(context).requestFocus(FocusNode());
-          },
-          child: Directionality(
-            textDirection: TextDirection.ltr,
-            child: getBody(context),
-          ),
-        ),
-        bottomNavigationBar: getBottomNavigationBar(),
-      ),
-    );
-  }
-
-  Future<void> showAppDialog(
-    String title,
-    String errorMessage, {
-    VoidCallback? okAction,
-  }) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Stack(
-            children: <Widget>[
-              Positioned(
-                left: 0,
-                child: InkWell(
-                  child: Icon(Icons.close),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+    return FutureBuilder(
+      future: ModuleConfigurator(context).configureDrawer(),
+      builder: (context, snapshot) {
+        return PopScope(
+          child: Scaffold(
+            key: _scaffoldKey,
+            endDrawer: snapshot.data,
+            floatingActionButton: getFloatingActionButton(),
+            appBar: getAppbar(),
+            body: GestureDetector(
+              onTap: () {
+                FocusScope.of(context).requestFocus(FocusNode());
+              },
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: getBody(context),
               ),
-              Center(child: Text(title, textAlign: TextAlign.center)),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Center(child: Text(errorMessage, textAlign: TextAlign.center)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: mainColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.0),
-                        ),
-                      ),
-                      child: Text('ok'),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        if (okAction != null) {
-                          okAction();
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ],
             ),
+            bottomNavigationBar: getBottomNavigationBar(),
           ),
         );
       },
@@ -97,28 +47,24 @@ abstract class BaseState<T extends BaseStatefulWidget> extends State<T> {
   PreferredSizeWidget getAppbar() {
     return AppBar(
       centerTitle: true,
-      leading: BackButton(),
       backgroundColor: mainColor,
+      foregroundColor: whiteColor,
       title: Text(getTitle()),
     );
   }
 
-  Widget getBody(BuildContext context);
-  LoadingDialog? loadingDialog;
-
-  hideDialog() {
-    if (loadingDialog != null) {
-      Navigator.of(context).pop();
-      loadingDialog = null;
-    }
-  }
-
-  void showLoadingDialog() async {
-    loadingDialog = loadingDialog ?? LoadingDialog();
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) => loadingDialog ?? SizedBox.shrink(),
+  void showSnack(String msg, {VoidCallback? handler, String? actionTitle}) {
+    final currentContext = _scaffoldKey.currentContext;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        action:
+            handler == null
+                ? null
+                : SnackBarAction(label: actionTitle ?? '', onPressed: handler),
+      ),
     );
   }
+
+  Widget getBody(BuildContext context);
 }

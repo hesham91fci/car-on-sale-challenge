@@ -10,8 +10,9 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ModuleConfigurator(context).configureRegistrationPage(),
+    return FutureBuilder(
+      future: ModuleConfigurator(context).configureHomePage(),
+      builder: (context, snapshot) => snapshot.data ?? Container(),
     );
   }
 }

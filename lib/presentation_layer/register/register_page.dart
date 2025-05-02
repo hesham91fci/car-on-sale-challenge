@@ -1,4 +1,5 @@
 import 'package:car_on_sale_challenge/Base/base_stateful_widget.dart';
+import 'package:car_on_sale_challenge/base/bloc/bloc_base_common_state.dart';
 import 'package:car_on_sale_challenge/business_layer/module_configurator.dart';
 import 'package:car_on_sale_challenge/business_layer/ui_models/textfield_state.dart';
 import 'package:car_on_sale_challenge/presentation_layer/common/cos_textfield.dart';
@@ -6,6 +7,8 @@ import 'package:car_on_sale_challenge/presentation_layer/common/local_success_st
 import 'package:car_on_sale_challenge/presentation_layer/register/blocs/register_bloc.dart';
 import 'package:car_on_sale_challenge/presentation_layer/register/blocs/validator_bloc.dart';
 import 'package:car_on_sale_challenge/presentation_layer/register/register_events/register_event.dart';
+import 'package:car_on_sale_challenge/presentation_layer/register/register_events/remember_me_event.dart';
+import 'package:car_on_sale_challenge/presentation_layer/register/register_state/remember_me_state.dart';
 import 'package:car_on_sale_challenge/presentation_layer/register/user_validation_events/email_validation_event.dart';
 import 'package:car_on_sale_challenge/presentation_layer/register/user_validation_events/first_name_validation_event.dart';
 import 'package:car_on_sale_challenge/presentation_layer/register/user_validation_events/last_name_validation_event.dart';
@@ -23,7 +26,6 @@ class RegisterPage extends BaseStatefulWidget {
 }
 
 class _RegisterPageState extends BaseState<RegisterPage> {
-  bool _isChecked = false;
   RegisterBloc? _registerBloc;
   ValidatorBloc? _validatorBloc;
   static const String _firstName = "firstName";
@@ -43,6 +45,7 @@ class _RegisterPageState extends BaseState<RegisterPage> {
     super.initState();
     _registerBloc = BlocProvider.of<RegisterBloc>(context);
     _validatorBloc = BlocProvider.of<ValidatorBloc>(context);
+    _registerBloc?.add(RememberMeEvent(false));
   }
 
   @override
@@ -57,6 +60,7 @@ class _RegisterPageState extends BaseState<RegisterPage> {
             children: [
               CosTextfield(
                 focusNode: _textfieldStateMap[_firstName]?.focusNode,
+                editingController: _textfieldStateMap[_firstName]?.controller,
                 label: 'First name',
                 onChanged:
                     (value) =>
@@ -68,6 +72,7 @@ class _RegisterPageState extends BaseState<RegisterPage> {
               ),
               CosTextfield(
                 focusNode: _textfieldStateMap[_lastName]?.focusNode,
+                editingController: _textfieldStateMap[_lastName]?.controller,
                 label: 'Last name',
                 onChanged:
                     (value) =>
@@ -79,6 +84,7 @@ class _RegisterPageState extends BaseState<RegisterPage> {
               ),
               CosTextfield(
                 focusNode: _textfieldStateMap[_email]?.focusNode,
+                editingController: _textfieldStateMap[_email]?.controller,
                 label: 'Email',
                 onChanged:
                     (value) => _validatorBloc?.add(EmailValidationEvent(value)),
@@ -113,24 +119,29 @@ class _RegisterPageState extends BaseState<RegisterPage> {
                         : null,
                 obscureText: true,
               ),
-              GestureDetector(
-                onTap:
-                    () => setState(() {
-                      _isChecked = !_isChecked;
-                    }),
-                child: Row(
-                  children: [
-                    Checkbox(
-                      value: _isChecked,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          _isChecked = value ?? false;
-                        });
-                      },
+              BlocSelector<RegisterBloc, BlocBaseCommonState, bool>(
+                selector: (state) {
+                  return state is RememberMeState && state.shouldStayLoggedIn;
+                },
+                builder: (context, shouldStayLoggedIn) {
+                  return GestureDetector(
+                    onTap:
+                        () => _registerBloc?.add(
+                          RememberMeEvent(!shouldStayLoggedIn),
+                        ),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: shouldStayLoggedIn,
+                          onChanged: (bool? value) {
+                            _registerBloc?.add(RememberMeEvent(value ?? false));
+                          },
+                        ),
+                        Text('Stay logged in'),
+                      ],
                     ),
-                    Text('Stay logged in'),
-                  ],
-                ),
+                  );
+                },
               ),
               ElevatedButton(
                 onPressed:
@@ -154,13 +165,15 @@ class _RegisterPageState extends BaseState<RegisterPage> {
   }
 
   Widget _listenToSuccess() {
-    return BlocListener<RegisterBloc, LocalSuccessState>(
+    return BlocListener<RegisterBloc, BlocBaseCommonState>(
       listener: (context, state) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => ModuleConfigurator(context).configureVINPage(),
-          ),
-        );
+        if (state is LocalSuccessState && state.isSuccess) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => ModuleConfigurator(context).configureVINPage(),
+            ),
+          );
+        }
       },
       child: Container(),
     );
