@@ -23,7 +23,7 @@ class RegisterBloc extends Bloc<BaseRegisterEvent, BlocBaseCommonState> {
           ).toJson(),
         );
       }
-      emit(LocalSuccessState(true));
+      emit(LocalSuccessState(event.isValid));
     });
     on<RememberMeEvent>((event, emit) async {
       _currentRememberMeEvent = event;

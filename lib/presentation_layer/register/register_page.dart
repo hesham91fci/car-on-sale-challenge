@@ -151,6 +151,7 @@ class _RegisterPageState extends BaseState<RegisterPage> {
                             _getText(_firstName),
                             _getText(_lastName),
                             _getText(_email),
+                            state.isValid,
                           ),
                         )
                         : null,

@@ -10,7 +10,6 @@ import 'package:car_on_sale_challenge/presentation_layer/vehicle_identification/
 import 'package:car_on_sale_challenge/presentation_layer/vehicle_state_page/bloc/vehicle_state_bloc.dart';
 import 'package:car_on_sale_challenge/presentation_layer/vehicle_state_page/vehicle_state_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ModuleConfigurator {
@@ -46,11 +45,15 @@ class ModuleConfigurator {
           ListTile(
             title: Text('logout'),
             onTap: () async {
-              await LocalStorageManager.shared.delete(RecordName.currentUser);
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => configureRegistrationPage()),
-                (Route<dynamic> route) => false,
-              );
+              if (context.mounted) {
+                await LocalStorageManager.shared.delete(RecordName.currentUser);
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (_) => configureRegistrationPage(),
+                  ),
+                  (Route<dynamic> route) => false,
+                );
+              }
             },
           ),
         ],

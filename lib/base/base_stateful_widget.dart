@@ -1,6 +1,5 @@
 import 'package:car_on_sale_challenge/business_layer/module_configurator.dart';
 import 'package:car_on_sale_challenge/presentation_layer/constants/app_colors.dart';
-import 'package:car_on_sale_challenge/presentation_layer/helpers/loading_dialog.dart';
 import 'package:flutter/material.dart';
 
 abstract class BaseStatefulWidget extends StatefulWidget {
@@ -54,7 +53,6 @@ abstract class BaseState<T extends BaseStatefulWidget> extends State<T> {
   }
 
   void showSnack(String msg, {VoidCallback? handler, String? actionTitle}) {
-    final currentContext = _scaffoldKey.currentContext;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
